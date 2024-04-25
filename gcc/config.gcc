@@ -406,6 +406,9 @@ ft32*)	cpu_type=ft32
 moxie*)	cpu_type=moxie
 	target_has_targetm_common=no
 	;;
+pdp1)	cpu_type=pdp1
+	target_has_targetm_common=no
+	;;
 fido-*-*)
 	cpu_type=m68k
 	extra_headers=math-68881.h
@@ -1825,6 +1828,13 @@ moxie-*-elf)
 	gnu_ld=yes
 	tm_file="elfos.h newlib-stdint.h ${tm_file}"
 	tmake_file="${tmake_file} moxie/t-moxie"
+	;;
+pdp1-*-elf)
+	gas=yes
+	gnu_ld=yes
+	#tm_file="elfos.h newlib-stdint.h ${tm_file}"
+	tm_file="${tm_file}"
+	tmake_file="${tmake_file} pdp1/t-pdp1"
 	;;
 moxie-*-uclinux*)
 	gas=yes
@@ -3702,6 +3712,7 @@ fi
 if [ "$common_out_file" = "" ]; then
   if [ "$target_has_targetm_common" = "yes" ]; then
     common_out_file="$cpu_type/$cpu_type-common.cc"
+    common_out_file="default-common.cc"
   else
     common_out_file="default-common.cc"
   fi

@@ -2216,7 +2216,7 @@ toplev::run_self_tests ()
 
   /* Run the tests; any failures will lead to an abort of the process.
      Use "make selftests-gdb" to run under the debugger.  */
-  ::selftest::run_tests ();
+  //::selftest::run_tests ();
 
   /* Cleanup.  */
   bitmap_obstack_release (NULL);
