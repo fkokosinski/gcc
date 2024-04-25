@@ -122,6 +122,8 @@ ft32*)	cpu_type=ft32
 	;;
 moxie*)	cpu_type=moxie
 	;;
+pdp1-*) cpu_type=pdp1
+	;;
 i[34567]86-*-*)
 	cpu_type=i386
 	;;
@@ -1198,6 +1200,9 @@ or1k-*-linux*)
 or1k-*-*)
 	tmake_file="$tmake_file or1k/t-or1k or1k/t-crtstuff"
 	tmake_file="$tmake_file t-softfp-sfdf t-softfp"
+	;;
+pdp1-*-*)
+	tmake_files="pdp1/t-pdp1 t-softfp"
 	;;
 pdp11-*-*)
 	tmake_file="pdp11/t-pdp11 t-fdpbit"

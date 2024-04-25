@@ -237,7 +237,7 @@ GENERIC_MATCH_PD_SEQ_SRC = $(patsubst %, generic-match-%.cc, $(MATCH_SPLITS_SEQ)
 GENERIC_MATCH_PD_SEQ_O = $(patsubst %, generic-match-%.o, $(MATCH_SPLITS_SEQ))
 
 # The number of splits to be made for the insn-emit files.
-NUM_INSNEMIT_SPLITS = @DEFAULT_INSNEMIT_PARTITIONS@
+NUM_INSNEMIT_SPLITS = 1 #@DEFAULT_INSNEMIT_PARTITIONS@
 INSNEMIT_SPLITS_SEQ = $(wordlist 1,$(NUM_INSNEMIT_SPLITS),$(one_to_9999))
 INSNEMIT_SEQ_SRC = $(patsubst %, insn-emit-%.cc, $(INSNEMIT_SPLITS_SEQ))
 INSNEMIT_SEQ_TMP = $(patsubst %, tmp-emit-%.cc, $(INSNEMIT_SPLITS_SEQ))

@@ -5114,6 +5114,8 @@ extern HOST_WIDE_INT int_byte_position (const_tree);
 #define LOG2_BITS_PER_UNIT 3
 #elif BITS_PER_UNIT == 16
 #define LOG2_BITS_PER_UNIT 4
+#elif BITS_PER_UNIT == 32
+#define LOG2_BITS_PER_UNIT 5
 #else
 #error Unknown BITS_PER_UNIT
 #endif

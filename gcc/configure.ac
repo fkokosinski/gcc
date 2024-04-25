@@ -908,7 +908,7 @@ AC_DEFINE_UNQUOTED(DEFAULT_STK_CLASH_GUARD_SIZE, $DEFAULT_STK_CLASH_GUARD_SIZE,
 AC_ARG_WITH(matchpd-partitions,
 [AS_HELP_STRING([--with-matchpd-partitions=num],
 [Set the number of partitions to make for gimple and generic when splitting match.pd. [default=10]])],
-[DEFAULT_MATCHPD_PARTITIONS="$with_matchpd_partitions"], [DEFAULT_MATCHPD_PARTITIONS=10])
+[DEFAULT_MATCHPD_PARTITIONS="$with_matchpd_partitions"], [DEFAULT_MATCHPD_PARTITIONS=1])
 if (test $DEFAULT_MATCHPD_PARTITIONS -lt 1); then
   AC_MSG_ERROR(m4_normalize([
 		Invalid value $DEFAULT_MATCHPD_PARTITIONS for --with-matchpd-partitions. \
@@ -921,7 +921,7 @@ AC_SUBST(DEFAULT_MATCHPD_PARTITIONS)
 AC_ARG_WITH(insnemit-partitions,
 [AS_HELP_STRING([--with-insnemit-partitions=num],
 [Set the number of partitions of insn-emit.cc for genemit to create. [default=10]])],
-[DEFAULT_INSNEMIT_PARTITIONS="$with_insnemit_partitions"], [DEFAULT_INSNEMIT_PARTITIONS=10])
+[DEFAULT_INSNEMIT_PARTITIONS="$with_insnemit_partitions"], [DEFAULT_INSNEMIT_PARTITIONS=1])
 if (test $DEFAULT_INSNEMIT_PARTITIONS -lt 1); then
   AC_MSG_ERROR(m4_normalize([
 		Invalid value $DEFAULT_INSNEMIT_PARTITIONS for --with-insnemit-partitions. \

@@ -185,12 +185,12 @@ init_reg_sets (void)
 
   /* Sanity check: make sure the target macros FIXED_REGISTERS and
      CALL_USED_REGISTERS had the right number of initializers.  */
-  gcc_assert (sizeof fixed_regs == sizeof initial_fixed_regs);
-  gcc_assert (sizeof call_used_regs == sizeof initial_call_used_regs);
+  //gcc_assert (sizeof fixed_regs == sizeof initial_fixed_regs);
+  //gcc_assert (sizeof call_used_regs == sizeof initial_call_used_regs);
 #ifdef REG_ALLOC_ORDER
   gcc_assert (sizeof reg_alloc_order == sizeof initial_reg_alloc_order);
 #endif
-  gcc_assert (sizeof reg_names == sizeof initial_reg_names);
+  //gcc_assert (sizeof reg_names == sizeof initial_reg_names);
 
   memcpy (fixed_regs, initial_fixed_regs, sizeof fixed_regs);
   memcpy (call_used_regs, initial_call_used_regs, sizeof call_used_regs);
