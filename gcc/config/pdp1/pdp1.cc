@@ -340,25 +340,28 @@ pdp1_secondary_reload (bool in_p ATTRIBUTE_UNUSED,
 			machine_mode reload_mode ATTRIBUTE_UNUSED,
 			secondary_reload_info *sri ATTRIBUTE_UNUSED)
 {
-  if (reload_class == ACC_REG)
+  if ((reload_class == HW_REGS) && (REGNO_REG_CLASS (REGNO (x)) == HW_REGS))
+    return GENERAL_REGS;
+
+  if (reload_class == HW_REGS)
     return NO_REGS;
 
-  if (REGNO_REG_CLASS (REGNO (x)) == ACC_REG)
+  if (REGNO_REG_CLASS (REGNO (x)) == HW_REGS)
     return NO_REGS;
 
-  return ACC_REG;
+  return HW_REGS;
 }
 
 static reg_class_t
 pdp1_preferred_reload_class (rtx x, reg_class_t rclass)
 {
-  return ACC_REG;
+  return HW_REGS;
 }
 
 static reg_class_t
 pdp1_preferred_output_reload_class (rtx x, reg_class_t rclass)
 {
-  return ACC_REG;
+  return HW_REGS;
 }
 
 #undef TARGET_PROMOTE_PROTOTYPES

@@ -119,8 +119,8 @@
 #define FIRST_PSEUDO_REGISTER (PDP1_PC + 1)
 #define AVOID_CCMODE_COPIES 1
 
-enum reg_class	        {  NO_REGS,   GENERAL_REGS,   ACC_REG,   IO_REG,   SPECIAL_REGS,   CC_REGS,  ALL_REGS, LIM_REG_CLASSES };
-#define REG_CLASS_NAMES { "NO_REGS", "GENERAL_REGS", "ACC_REG", "IO_REG", "SPECIAL_REGS", "CC_REGS","ALL_REGS" }
+enum reg_class	        {  NO_REGS,   GENERAL_REGS,   ACC_REG,   IO_REG,   HW_REGS,   SPECIAL_REGS,   CC_REGS,  ALL_REGS, LIM_REG_CLASSES };
+#define REG_CLASS_NAMES { "NO_REGS", "GENERAL_REGS", "ACC_REG", "IO_REG", "HW_REGS" ,"SPECIAL_REGS", "CC_REGS","ALL_REGS" }
 #define N_REG_CLASSES LIM_REG_CLASSES
 
 /* nth reg is nth bit in the reg class mask */
@@ -129,13 +129,14 @@ enum reg_class	        {  NO_REGS,   GENERAL_REGS,   ACC_REG,   IO_REG,   SPECIA
   { 0x000003FF }, /* R0-R7, FP, SP = 2^10 - 1 */ \
   { 0x00000400 }, /* $acc = 1 << 10 */ \
   { 0x00000800 }, /* $io = 1 << 11 */ \
+  { 0x00000C00 }, /* $io and $acc - for secondary reloads etc */ \
   { 0x00007000 }, /* ?qfp, ?qap, $pc */ \
   { 0x00008000 }, /* ?cc = 1 << 15 */ \
   { 0x0000FFFF }  /* All registers */ \
 }
 
 #define REGISTER_NAMES      { "200", "201", "202", "203", "204", "205", "206", "207", "208", "209", "$acc", "io", "?fp", "?ap", "$pc", "?cc" }
-#define FIXED_REGISTERS     {     0,     0,     0,     0,     0,     0,     0,     0,     1,     1,     0,     1,     1,     1,     1,     1 }
+#define FIXED_REGISTERS     {     0,     0,     0,     0,     0,     0,     0,     0,     1,     1,     0,     0,     1,     1,     1,     1 }
 #define CALL_USED_REGISTERS {     1,     1,     1,     1,     0,     0,     0,     0,     1,     1,     1,     1,     1,     1,     1,     1 }
 
 /* A C expression whose value is a register class containing hard
@@ -145,10 +146,8 @@ static inline reg_class pdp1_regno_reg_class(int regno)
 {
   if (regno <= PDP1_SP)
     return GENERAL_REGS;
-  if (regno == PDP1_ACC)
-    return ACC_REG;
-  if (regno == PDP1_IO)
-    return IO_REG;
+  if ((regno == PDP1_ACC) || (regno == PDP1_IO))
+    return HW_REGS;
   if (regno == PDP1_CC)
     return CC_REGS;
 

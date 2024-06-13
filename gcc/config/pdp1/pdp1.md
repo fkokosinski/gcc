@@ -5,7 +5,10 @@
 (include "constraints.md")
 (include "predicates.md")
 
-(define_mode_iterator PDP1_MODE [QI HI SI])
+;; We only support QImode
+(define_mode_iterator PDP1_MODE [QI])
+
+;; TODO: register declaration from `pdp1.h` should be moved here
 (define_constants [
   (PDP1_SP  9)
   (PDP1_ACC 10)
@@ -25,13 +28,18 @@
 ;; -------------------------------------------------------------------------
 
 (define_insn "mov<mode>"
-  [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "=a,a,rm")
-	(match_operand:PDP1_MODE 1 "general_operand" "rm,i,a"))]
+  [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "=a,a,rm,b,rm,a,b,rm")
+	(match_operand:PDP1_MODE 1 "pdp1_movsrc_operand" "rm,i,a,rm,b,Z,Z,Z"))]
   ""
   "@
   lac\\t%1
   law\\t%1
-  dac\\t%0")
+  dac\\t%0
+  lio\\t%1
+  dio\\t%0
+  cla
+  cli
+  dzm\\t%0")
 
 (define_expand "mov<mode>_push"
   [(set (mem:PDP1_MODE (pre_dec:PDP1_MODE (reg:PDP1_MODE PDP1_SP)))
