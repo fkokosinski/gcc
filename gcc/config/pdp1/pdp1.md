@@ -169,17 +169,31 @@
   [(set (pc)
         (if_then_else
 	  (match_operator 0 "pdp1_comparison_operator"
-	    [(match_operand:PDP1_MODE 1 "register_operand" "a")
-	     (match_operand:PDP1_MODE 2 "register_operand" "r")])
+	    [(match_operand:PDP1_MODE 1 "register_operand" "+a")
+	     (match_operand:PDP1_MODE 2 "register_operand" "rm")])
 	  (label_ref (match_operand 3 "" ""))
 	  (pc)))]
   ""
 {
   switch (GET_CODE (operands[0])) {
   case EQ:
-    return "sad\\t%2\\n\\tjmp\\t%l3";
+    return "sad\\t%2\\n\\t"
+           "jmp\\t%l3";
   case NE:
-    return "sas\\t%2\\n\\tjmp\\t%l3";
+    return "sas\\t%2\\n\\t"
+           "jmp\\t%l3";
+
+  case GT:
+    /* 0500 = sza | sma */
+    return "sub\\t%2\\n\\t"
+           "skp\\t0500\\n\\t"
+           "jmp\\t%l3\\n\\t";
+
+  case LT:
+    /* 0300 = sza | spa */
+    return "sub\\t%2\\n\\t"
+           "skp\\t0300\\n\\t"
+           "jmp\\t%l3\\n\\t";
   }
 })
 

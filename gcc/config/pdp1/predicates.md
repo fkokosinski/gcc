@@ -3,4 +3,4 @@
 ;; -------------------------------------------------------------------------
 
 (define_predicate "pdp1_comparison_operator"
-  (match_code "ne,eq"))
+  (match_code "ne,eq,lt,gt"))
