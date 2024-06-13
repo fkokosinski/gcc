@@ -18,3 +18,8 @@
        (ior (and (match_code "const_int")
 		 (match_test "IN_RANGE (INTVAL (op), -4095, 4095)"))
 	    (match_code "symbol_ref"))))
+
+;; TODO: how to handle larger shifts?
+(define_predicate "pdp1_shift_rotate_amount"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 7)")))

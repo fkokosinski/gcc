@@ -145,6 +145,50 @@
   "ior\\t%2")
 
 ;; -------------------------------------------------------------------------
+;; shift instruction
+;; -------------------------------------------------------------------------
+
+(define_insn "ashl<mode>3"
+  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a,b")
+	(ashift:PDP1_MODE
+	  (match_operand:PDP1_MODE 1 "register_operand" "0,0")
+	  (match_operand:PDP1_MODE 2 "pdp1_shift_rotate_amount" "i,i")))]
+  ""
+  "@
+  sal\\t%2
+  sil\\t%2")
+
+(define_insn "ashr<mode>3"
+  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a,b")
+	(ashiftrt:PDP1_MODE
+	  (match_operand:PDP1_MODE 1 "register_operand" "0,0")
+	  (match_operand:PDP1_MODE 2 "pdp1_shift_rotate_amount" "i,i")))]
+  ""
+  "@
+  sar\\t%2
+  sir\\t%2")
+
+(define_insn "rotl<mode>3"
+  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a,b")
+	(rotate:PDP1_MODE
+	  (match_operand:PDP1_MODE 1 "register_operand" "0,0")
+	  (match_operand:PDP1_MODE 2 "pdp1_shift_rotate_amount" "i,i")))]
+  ""
+  "@
+  ral\\t%2
+  ril\\t%2")
+
+(define_insn "rotr<mode>3"
+  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a,b")
+	(rotatert:PDP1_MODE
+	  (match_operand:PDP1_MODE 1 "register_operand" "0,0")
+	  (match_operand:PDP1_MODE 2 "pdp1_shift_rotate_amount" "i,i")))]
+  ""
+  "@
+  rar\\t%2
+  rir\\t%2")
+
+;; -------------------------------------------------------------------------
 ;; jmp instruction
 ;; -------------------------------------------------------------------------
 
