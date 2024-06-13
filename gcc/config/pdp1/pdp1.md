@@ -82,13 +82,16 @@
 ;; arith instruction
 ;; -------------------------------------------------------------------------
 
+;; TODO: `idx` clobbers  up the ACC register - how to represent that?
 (define_insn "add<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a")
+  [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "=a,rm")
 	(plus:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0")
-	  (match_operand:PDP1_MODE 2 "nonimmediate_operand" "g")))]
+	  (match_operand:PDP1_MODE 1 "nonimmediate_operand" "0,0")
+	  (match_operand:PDP1_MODE 2 "pdp1_addsrc_operand" "rm,U")))]
   ""
-  "add\\t%2")
+  "@
+  add\\t%2
+  idx\\t%0")
 
 (define_insn "sub<mode>3"
   [(set (match_operand:PDP1_MODE 0 "register_operand" "=a")
