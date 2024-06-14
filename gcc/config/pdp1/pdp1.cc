@@ -195,6 +195,12 @@ pdp1_function_value (const_tree valtype,
   return gen_rtx_REG (TYPE_MODE (valtype), regno);
 }
 
+static bool
+pdp1_function_value_regno_p (const unsigned int regno)
+{
+  return (regno == PDP1_R1);
+}
+
 #define PDP1_FUNCTION_ARG_SIZE(MODE, TYPE)	\
   ((MODE) != BLKmode ? GET_MODE_SIZE (MODE)	\
    : (unsigned) int_size_in_bytes (TYPE))
@@ -384,6 +390,8 @@ pdp1_preferred_output_reload_class (rtx x, reg_class_t rclass)
 
 #undef TARGET_FUNCTION_VALUE
 #define TARGET_FUNCTION_VALUE pdp1_function_value
+#undef TARGET_FUNCTION_VALUE_REGNO_P
+#define TARGET_FUNCTION_VALUE_REGNO_P pdp1_function_value_regno_p
 #undef  TARGET_FUNCTION_ARG_ADVANCE
 #define TARGET_FUNCTION_ARG_ADVANCE pdp1_function_arg_advance
 #undef TARGET_FUNCTION_ARG
