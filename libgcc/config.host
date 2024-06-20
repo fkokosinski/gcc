@@ -1202,7 +1202,7 @@ or1k-*-*)
 	tmake_file="$tmake_file t-softfp-sfdf t-softfp"
 	;;
 pdp1-*-*)
-	tmake_files="pdp1/t-pdp1 t-softfp"
+	tmake_files="pdp1/t-pdp1"
 	;;
 pdp11-*-*)
 	tmake_file="pdp11/t-pdp11 t-fdpbit"

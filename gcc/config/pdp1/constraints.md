@@ -4,6 +4,7 @@
 
 (define_register_constraint "a" "ACC_REG" "Accumulator register ($acc)")
 (define_register_constraint "b" "IO_REG" "Input/output register ($io)")
+(define_register_constraint "c" "HW_REGS" "HW Regs")
 
 (define_constraint "U"
   "An immediate value of 1"
