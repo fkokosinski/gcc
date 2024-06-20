@@ -1,1 +1,1 @@
-MULTILIB_OPTIONS     = msoft-float
+LIBGCC2_CFLAGS = -02

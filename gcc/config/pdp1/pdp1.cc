@@ -198,7 +198,7 @@ pdp1_function_value (const_tree valtype,
 static bool
 pdp1_function_value_regno_p (const unsigned int regno)
 {
-  return (regno == PDP1_R1);
+  return (regno == PDP1_ACC);
 }
 
 #define PDP1_FUNCTION_ARG_SIZE(MODE, TYPE)	\
@@ -408,6 +408,14 @@ pdp1_preferred_output_reload_class (rtx x, reg_class_t rclass)
 
 #undef  TARGET_PREFERRED_OUTPUT_RELOAD_CLASS
 #define TARGET_PREFERRED_OUTPUT_RELOAD_CLASS pdp1_preferred_output_reload_class
+
+static void
+pdp1_asm_named_section (const char *name, unsigned int flags ATTRIBUTE_UNUSED,
+                        tree decl ATTRIBUTE_UNUSED)
+{
+  fprintf (asm_out_file, "\t.section %s\n", name);
+}
+
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

@@ -142,7 +142,7 @@ enum reg_class	        {  NO_REGS,   GENERAL_REGS,   ACC_REG,   IO_REG,   HW_REG
 /* A C expression whose value is a register class containing hard
    register REGNO.  */
 
-static inline reg_class pdp1_regno_reg_class(int regno)
+static inline enum reg_class pdp1_regno_reg_class(int regno)
 {
   if (regno <= PDP1_SP)
     return GENERAL_REGS;
@@ -371,5 +371,7 @@ static inline reg_class pdp1_regno_reg_class(int regno)
 
 #define LIBCALL_VALUE(MODE) \
   gen_rtx_REG (MODE, PDP1_R2)
+
+#define TARGET_ASM_NAMED_SECTION pdp1_asm_named_section
 
 #endif /* GCC_PDP1_H */
