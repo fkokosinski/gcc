@@ -12,6 +12,7 @@
 (define_constants [
   (PDP1_SP  9)
   (PDP1_ACC 10)
+  (PDP1_IO  11)
   (PDP1_CC  15)])
 
 ;; -------------------------------------------------------------------------
@@ -26,6 +27,12 @@
 ;; -------------------------------------------------------------------------
 ;; mov instruction
 ;; -------------------------------------------------------------------------
+
+(define_insn "movhi"
+  [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
+	(match_operand:HI 1 "general_operand" "c"))]
+  ""
+  "dac\\t%0\\n\\tdio\\t%0+1")
 
 (define_insn "mov<mode>"
   [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "=a,a,rm,b,rm,a,b,rm")
@@ -109,6 +116,49 @@
   ""
   "sub\\t%2")
 
+;; TODO: the result is multiplied by 2 - fix this
+(define_expand "mulqihi3"
+  [(set (match_operand:HI 0 "register_operand" "=c")
+	(mult:HI
+	  (match_operand:QI 1 "register_operand" "a")
+	  (match_operand:QI 2 "nonimmediate_operand" "g")))]
+
+  ""
+  "
+{
+  rtx rot = gen_rtx_CONST_INT (HImode, 1);
+
+  emit_insn (gen_mulqihi3_internal (operands[0], operands[1], operands[2]));
+  emit_insn (gen_ashrhi3 (operands[0], operands[0], rot));
+
+  DONE;
+}")
+
+(define_insn "mulqihi3_internal"
+  [(set (match_operand:HI 0 "register_operand" "=c")
+	(mult:HI
+	  (match_operand:QI 1 "register_operand" "a")
+	  (match_operand:QI 2 "nonimmediate_operand" "g")))]
+
+  ""
+  "mul\\t%2")
+
+(define_insn "divmodqi4"
+  [(set (match_operand:QI 0 "register_operand" "=a")
+	(div:QI
+	  (match_operand:QI 1 "register_operand" "b")
+	  (match_operand:QI 2 "nonimmediate_operand" "g")))
+   (set (match_operand:QI 3 "register_operand" "=1")
+	(mod:QI
+	  (match_dup 1)
+	  (match_dup 2)))]
+  ""
+  ;; cla    # zero extend the combined ACC + IO register
+  ;; sil 1 -# shift the IO reg one bit to the right; IO LSB is ignored in div
+  ;; div %0
+  ;; nop    # div skips the next instruction
+  "cla\\n\\tsil\\t1\\n\\tdiv\\t%2\\n\\tnop")
+
 ;; -------------------------------------------------------------------------
 ;; logic instruction
 ;; -------------------------------------------------------------------------
@@ -148,45 +198,77 @@
 ;; shift instruction
 ;; -------------------------------------------------------------------------
 
-(define_insn "ashl<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a,b")
-	(ashift:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0,0")
-	  (match_operand:PDP1_MODE 2 "pdp1_shift_rotate_amount" "i,i")))]
+(define_insn "ashlqi3"
+  [(set (match_operand:QI 0 "register_operand" "=a,b")
+	(ashift:QI
+	  (match_operand:QI 1 "register_operand" "0,0")
+	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i,i")))]
   ""
   "@
   sal\\t%2
   sil\\t%2")
 
-(define_insn "ashr<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a,b")
-	(ashiftrt:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0,0")
-	  (match_operand:PDP1_MODE 2 "pdp1_shift_rotate_amount" "i,i")))]
+(define_insn "ashlhi3"
+  [(set (match_operand:HI 0 "register_operand" "=c")
+	(ashift:HI
+	  (match_operand:HI 1 "register_operand" "0")
+	  (match_operand:HI 2 "pdp1_shift_rotate_amount" "i")))]
+  ""
+  "scl\\t%2")
+
+(define_insn "ashrqi3"
+  [(set (match_operand:QI 0 "register_operand" "=a,b")
+	(ashiftrt:QI
+	  (match_operand:QI 1 "register_operand" "0,0")
+	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i,i")))]
   ""
   "@
   sar\\t%2
   sir\\t%2")
 
-(define_insn "rotl<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a,b")
-	(rotate:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0,0")
-	  (match_operand:PDP1_MODE 2 "pdp1_shift_rotate_amount" "i,i")))]
+(define_insn "ashrhi3"
+  [(set (match_operand:HI 0 "register_operand" "=c")
+	(ashiftrt:HI
+	  (match_operand:HI 1 "register_operand" "0")
+	  (match_operand:HI 2 "pdp1_shift_rotate_amount" "i")))]
+  ""
+  "scr\\t%2")
+
+(define_insn "rotlqi3"
+  [(set (match_operand:QI 0 "register_operand" "=a,b")
+	(rotate:QI
+	  (match_operand:QI 1 "register_operand" "0,0")
+	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i,i")))]
   ""
   "@
   ral\\t%2
   ril\\t%2")
 
-(define_insn "rotr<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a,b")
-	(rotatert:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0,0")
-	  (match_operand:PDP1_MODE 2 "pdp1_shift_rotate_amount" "i,i")))]
+(define_insn "rotlhi3"
+  [(set (match_operand:HI 0 "register_operand" "=c")
+	(rotate:HI
+	  (match_operand:HI 1 "register_operand" "0")
+	  (match_operand:HI 2 "pdp1_shift_rotate_amount" "i")))]
+  ""
+  "rcl\\t%2")
+
+(define_insn "rotrqi3"
+  [(set (match_operand:QI 0 "register_operand" "=a,b")
+	(rotatert:QI
+	  (match_operand:QI 1 "register_operand" "0,0")
+	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i,i")))]
   ""
   "@
   rar\\t%2
   rir\\t%2")
+
+(define_insn "rotrhi3"
+  [(set (match_operand:HI 0 "register_operand" "=c")
+	(rotatert:HI
+	  (match_operand:HI 1 "register_operand" "0")
+	  (match_operand:HI 2 "pdp1_shift_rotate_amount" "i")))]
+  ""
+  "rcr\\t%2")
 
 ;; -------------------------------------------------------------------------
 ;; jmp instruction
