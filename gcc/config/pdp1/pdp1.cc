@@ -184,13 +184,17 @@ pdp1_print_operand (FILE *file, rtx x, int code)
     }
 }
 
-/* let's always return in r1 (201) for now */
+
+/* 
+ * GCC expects the port to be easily able to mov return value to this register,
+ * so let's use the PDP1_IO for that.
+ */
 static rtx
 pdp1_function_value (const_tree valtype,
                      const_tree fntype_or_decl ATTRIBUTE_UNUSED,
 		     bool outgoing ATTRIBUTE_UNUSED)
 {
-  int regno = (outgoing) ? PDP1_ACC : PDP1_R1;
+  int regno = PDP1_IO;
 
   return gen_rtx_REG (TYPE_MODE (valtype), regno);
 }
@@ -198,7 +202,7 @@ pdp1_function_value (const_tree valtype,
 static bool
 pdp1_function_value_regno_p (const unsigned int regno)
 {
-  return (regno == PDP1_ACC);
+  return (regno == PDP1_IO);
 }
 
 #define PDP1_FUNCTION_ARG_SIZE(MODE, TYPE)	\
@@ -299,10 +303,7 @@ pdp1_expand_epilogue ()
   int regno;
   rtx insn;
   rtx reg = gen_rtx_REG (Pmode, 6);
-  rtx ret = gen_rtx_REG (Pmode, PDP1_R1);
   rtx acc = gen_rtx_REG (Pmode, PDP1_ACC);
-
-  emit_move_insn (ret, acc);
 
   if (cfun->machine->args_size > 0)
     {
@@ -346,9 +347,6 @@ pdp1_secondary_reload (bool in_p ATTRIBUTE_UNUSED,
 			machine_mode reload_mode ATTRIBUTE_UNUSED,
 			secondary_reload_info *sri ATTRIBUTE_UNUSED)
 {
-  if ((reload_class == HW_REGS) && (REGNO_REG_CLASS (REGNO (x)) == HW_REGS))
-    return GENERAL_REGS;
-
   if (reload_class == HW_REGS)
     return NO_REGS;
 

@@ -35,8 +35,8 @@
   "dac\\t%0\\n\\tdio\\t%0+1")
 
 (define_insn "mov<mode>"
-  [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "=a,a,rm,b,rm,a,b,rm")
-	(match_operand:PDP1_MODE 1 "pdp1_movsrc_operand" "rm,i,a,rm,b,Z,Z,Z"))]
+  [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "=a,a,rm,b,rm,a,b,rm,c")
+	(match_operand:PDP1_MODE 1 "pdp1_movsrc_operand" "rm,i,a,rm,b,Z,Z,Z,c"))]
   ""
   "@
   lac\\t%1
@@ -46,7 +46,8 @@
   dio\\t%0
   cla
   cli
-  dzm\\t%0")
+  dzm\\t%0
+  rcl\\t9\\n\\trcl\\t9")
 
 (define_expand "mov<mode>_push"
   [(set (mem:PDP1_MODE (pre_dec:PDP1_MODE (reg:PDP1_MODE PDP1_SP)))
