@@ -80,11 +80,13 @@ pdp1_compute_frame (void)
 	  cfun->machine->callee_saved_reg_size;
 }
 
+#undef TARGET_COMPUTE_FRAME_LAYOUT
+#define TARGET_COMPUTE_FRAME_LAYOUT pdp1_compute_frame
+
 int
 pdp1_initial_elimination_offset (int from, int to)
 {
   int ret;
-  pdp1_compute_frame ();
 
   switch (from)
     {
@@ -244,8 +246,6 @@ pdp1_expand_prologue ()
   rtx reg = gen_rtx_REG (Pmode, 7);
   rtx acc = gen_rtx_REG (Pmode, PDP1_ACC);
 
-  pdp1_compute_frame ();
-
   /* let's save acc on the stack, because it holds the reset addr */
   insn = emit_insn (gen_movqi_push (acc));
   RTX_FRAME_RELATED_P (insn) = 1;
@@ -254,6 +254,25 @@ pdp1_expand_prologue ()
   insn = emit_move_insn (acc, hard_frame_pointer_rtx);
   RTX_FRAME_RELATED_P (insn) = 1;
   insn = emit_insn (gen_movqi_push (acc));
+  RTX_FRAME_RELATED_P (insn) = 1;
+
+  /* set fp = sp */
+  insn = emit_move_insn (acc, stack_pointer_rtx);
+  RTX_FRAME_RELATED_P (insn) = 1;
+  insn = emit_move_insn (hard_frame_pointer_rtx, acc);
+  RTX_FRAME_RELATED_P (insn) = 1;
+
+  /* 
+   * increment fp - this is needed because we'll reference local vars starting
+   * with an offset of -1
+   *
+   * TODO: can this be handled better? 
+   */
+  insn = emit_move_insn (acc, GEN_INT (1));
+  RTX_FRAME_RELATED_P (insn) = 1;
+  insn = emit_insn (gen_addqi3 (acc, acc, hard_frame_pointer_rtx));
+  RTX_FRAME_RELATED_P (insn) = 1;
+  insn = emit_move_insn (hard_frame_pointer_rtx, acc);
   RTX_FRAME_RELATED_P (insn) = 1;
   
   /* save callee-saved regs */
@@ -278,12 +297,6 @@ pdp1_expand_prologue ()
       insn = emit_move_insn (stack_pointer_rtx, acc);
       RTX_FRAME_RELATED_P (insn) = 1;
     }
-
-  /* set fp = sp */
-  insn = emit_move_insn (acc, stack_pointer_rtx);
-  RTX_FRAME_RELATED_P (insn) = 1;
-  insn = emit_move_insn (hard_frame_pointer_rtx, acc);
-  RTX_FRAME_RELATED_P (insn) = 1;
 
   /* make space for args */
   if (cfun->machine->args_size > 0)
@@ -333,7 +346,7 @@ pdp1_expand_epilogue ()
   emit_insn (gen_movqi_pop (hard_frame_pointer_rtx));
 
   /* restore return addr and move it to r0 */
-  reg = gen_rtx_REG (Pmode, PDP1_R0);
+  reg = gen_rtx_REG (Pmode, PDP1_R6);
   emit_insn (gen_movqi_pop (reg));
 
   /* returner */
