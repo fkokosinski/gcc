@@ -196,7 +196,7 @@ pdp1_function_value (const_tree valtype,
                      const_tree fntype_or_decl ATTRIBUTE_UNUSED,
 		     bool outgoing ATTRIBUTE_UNUSED)
 {
-  int regno = PDP1_IO;
+  int regno = PDP1_R1;
 
   return gen_rtx_REG (TYPE_MODE (valtype), regno);
 }
@@ -475,6 +475,22 @@ pdp1_c_mode_for_floating_type (enum tree_index ti)
 #undef TARGET_C_MODE_FOR_FLOATING_TYPE
 #define TARGET_C_MODE_FOR_FLOATING_TYPE pdp1_c_mode_for_floating_type
 
+static reg_class_t
+pdp1_spill_class (reg_class_t rclass, machine_mode mode)
+{
+  switch (rclass)
+    {
+      case ACC_REG:
+      case IO_REG:
+      case HW_REGS:
+        return GENERAL_REGS;
+      default:
+	return NO_REGS;
+    }
+}
+
+#undef TARGET_SPILL_CLASS
+#define TARGET_SPILL_CLASS pdp1_spill_class
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

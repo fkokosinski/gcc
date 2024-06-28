@@ -388,28 +388,9 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
    base register must belong.  A base register is one used in an
    address which is the register value plus a displacement.  */
 #define BASE_REG_CLASS GENERAL_REGS
-
 #define INDEX_REG_CLASS NO_REGS
-
-#define HARD_REGNO_OK_FOR_BASE_P(NUM) \
-  ((unsigned) (NUM) < FIRST_PSEUDO_REGISTER \
-   && (REGNO_REG_CLASS(NUM) == GENERAL_REGS \
-       || (NUM) == HARD_FRAME_POINTER_REGNUM))
-
-/* A C expression which is nonzero if register number NUM is suitable
-   for use as a base register in operand addresses.  */
-#ifdef REG_OK_STRICT
-#define REGNO_OK_FOR_BASE_P(NUM)		 \
-  (HARD_REGNO_OK_FOR_BASE_P(NUM) 		 \
-   || HARD_REGNO_OK_FOR_BASE_P(reg_renumber[(NUM)]))
-#else
-#define REGNO_OK_FOR_BASE_P(NUM)		 \
-  ((NUM) >= FIRST_PSEUDO_REGISTER || HARD_REGNO_OK_FOR_BASE_P(NUM))
-#endif
-
-/* A C expression which is nonzero if register number NUM is suitable
-   for use as an index register in operand addresses.  */
-#define REGNO_OK_FOR_INDEX_P(NUM) PDP1_FP
+#define REGNO_OK_FOR_INDEX_P(REGNO) 0
+#define REGNO_OK_FOR_BASE_P(REGNO) ((REGNO) <= PDP1_SP)
 
 /* The maximum number of bytes that a single instruction can move
    quickly between memory and registers or between two memory
@@ -442,5 +423,6 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
 
 #define TARGET_ASM_NAMED_SECTION pdp1_asm_named_section
 #define TARGET_SMALL_REGISTER_CLASSES_FOR_MODE_P hook_bool_mode_true
+#define TARGET_REGISTER_USAGE_LEVELING hook_bool_void_true
 
 #endif /* GCC_PDP1_H */
