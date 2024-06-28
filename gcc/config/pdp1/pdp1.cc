@@ -429,7 +429,15 @@ pdp1_asm_named_section (const char *name, unsigned int flags ATTRIBUTE_UNUSED,
 static bool
 pdp1_class_likely_spilled_p (reg_class_t c)
 {
-  return (c == HW_REGS);
+  switch (c)
+    {
+      case ACC_REG:
+      case IO_REG:
+      case HW_REGS:
+        return true;
+      default:
+	return false;
+    }
 }
 
 #undef TARGET_CLASS_LIKELY_SPILLED_P

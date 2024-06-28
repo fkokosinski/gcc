@@ -10,10 +10,10 @@
 
 ;; TODO: register declaration from `pdp1.h` should be moved here
 (define_constants [
-  (PDP1_SP  9)
-  (PDP1_ACC 10)
-  (PDP1_IO  11)
-  (PDP1_CC  15)])
+  (PDP1_SP  25)
+  (PDP1_ACC 26)
+  (PDP1_IO  27)
+  (PDP1_CC  31)])
 
 ;; -------------------------------------------------------------------------
 ;; nop instruction
@@ -29,10 +29,13 @@
 ;; -------------------------------------------------------------------------
 
 (define_insn "movhi"
-  [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
-	(match_operand:HI 1 "general_operand" "c"))]
+  [(set (match_operand:HI 0 "nonimmediate_operand" "=g,c,c")
+	(match_operand:HI 1 "general_operand" "c,g,Z"))]
   ""
-  "dac\\t%0\\n\\tdio\\t%0+1")
+  "@
+  dac\\t%0\\n\\tdio\\t%0+1
+  lac\\t%1\\n\\tlio\\t%1+1
+  opr\\t04200")
 
 (define_insn "mov<mode>"
   [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "=a,a,rm,b,rm,a,b,rm,c")

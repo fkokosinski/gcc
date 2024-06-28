@@ -98,7 +98,6 @@
  *   acc - accumulator register
  */
 
-
 #define PDP1_R0      0
 #define PDP1_R1      1
 #define PDP1_R2      2
@@ -107,37 +106,110 @@
 #define PDP1_R5      5
 #define PDP1_R6      6
 #define PDP1_R7      7
-#define PDP1_FP      8
-#define PDP1_SP      9
-#define PDP1_ACC     10
-#define PDP1_IO      11
-#define PDP1_QFP     12
-#define PDP1_QAP     13
-#define PDP1_PC      14
-#define PDP1_CC      15
+#define PDP1_R8      8
+#define PDP1_R9      9
+#define PDP1_R10     10
+#define PDP1_R11     11
+#define PDP1_R12     12
+#define PDP1_R13     13
+#define PDP1_R14     14
+#define PDP1_R15     15
+#define PDP1_R16     16
+#define PDP1_R17     17
+#define PDP1_R18     18
+#define PDP1_R19     19
+#define PDP1_R20     20
+#define PDP1_R21     21
+#define PDP1_R22     22
+#define PDP1_R23     23
+#define PDP1_FP      24 
+#define PDP1_SP      25
+#define PDP1_ACC     26
+#define PDP1_IO      27
+#define PDP1_QFP     28
+#define PDP1_QAP     29
+#define PDP1_PC      30
+#define PDP1_CC      31
 
 #define FIRST_PSEUDO_REGISTER (PDP1_PC + 1)
 #define AVOID_CCMODE_COPIES 1
 
-enum reg_class	        {  NO_REGS,   GENERAL_REGS,   ACC_REG,   IO_REG,   HW_REGS,   SPECIAL_REGS,   CC_REGS,  ALL_REGS, LIM_REG_CLASSES };
-#define REG_CLASS_NAMES { "NO_REGS", "GENERAL_REGS", "ACC_REG", "IO_REG", "HW_REGS" ,"SPECIAL_REGS", "CC_REGS","ALL_REGS" }
+enum reg_class
+{
+  NO_REGS,
+  GENERAL_REGS,
+  ACC_REG,
+  IO_REG,
+  HW_REGS,
+  SPECIAL_REGS,
+  CC_REGS,
+  ALL_REGS,
+  LIM_REG_CLASSES
+};
+
 #define N_REG_CLASSES LIM_REG_CLASSES
+
+#define REG_CLASS_NAMES {	\
+  "NO_REGS",			\
+  "GENERAL_REGS",		\
+  "ACC_REG",			\
+  "IO_REG",			\
+  "HW_REGS",			\
+  "SPECIAL_REGS",		\
+  "CC_REGS",			\
+  "ALL_REGS"			\
+}
 
 /* nth reg is nth bit in the reg class mask */
 #define REG_CLASS_CONTENTS \
 { { 0x00000000 }, /* Empty */ \
-  { 0x000003FF }, /* R0-R7, FP, SP = 2^10 - 1 */ \
-  { 0x00000400 }, /* $acc = 1 << 10 */ \
-  { 0x00000800 }, /* $io = 1 << 11 */ \
-  { 0x00000C00 }, /* $io and $acc - for secondary reloads etc */ \
-  { 0x00007000 }, /* ?qfp, ?qap, $pc */ \
-  { 0x00008000 }, /* ?cc = 1 << 15 */ \
-  { 0x0000FFFF }  /* All registers */ \
+  { 0x03FFFFFF }, /* R0-R7, FP, SP = 2^10 - 1 */ \
+  { 0x04000000 }, /* $acc = 1 << 10 */ \
+  { 0x08000000 }, /* $io = 1 << 11 */ \
+  { 0x0C000000 }, /* $io and $acc - for secondary reloads etc */ \
+  { 0x70000000 }, /* ?qfp, ?qap, $pc */ \
+  { 0x80000000 }, /* ?cc = 1 << 15 */ \
+  { 0xFFFFFFFF }  /* All registers */ \
 }
 
-#define REGISTER_NAMES      { "200", "201", "202", "203", "204", "205", "206", "207", "208", "209", "$acc", "io", "?fp", "?ap", "$pc", "?cc" }
-#define FIXED_REGISTERS     {     0,     0,     0,     0,     0,     0,     0,     0,     1,     1,     0,     0,     1,     1,     1,     1 }
-#define CALL_USED_REGISTERS {     1,     1,     1,     1,     0,     0,     0,     0,     1,     1,     1,     1,     1,     1,     1,     1 }
+#define REGISTER_NAMES {		\
+  "0100", "0101", "0102", "0103",	\
+  "0104", "0105", "0106", "0107",	\
+  "0110", "0111", "0112", "0113",	\
+  "0114", "0115", "0116", "0117",	\
+  "0120", "0121", "0122", "0123",	\
+  "0124", "0125", "0126", "0127",	\
+  "0130", "0131", /* $fp and $sp */	\
+  "$acc", "$io",			\
+  "?fp", "?ap", "$pc",			\
+  "?cc"					\
+}
+
+#define FIXED_REGISTERS {	\
+  0, 0, 0, 0,			\
+  0, 0, 0, 0,			\
+  0, 0, 0, 0,			\
+  0, 0, 0, 0,			\
+  0, 0, 0, 0,			\
+  0, 0, 0, 0,			\
+  1, 1,				\
+  0, 0,				\
+  1, 1, 1,			\
+  1,				\
+}
+
+#define CALL_USED_REGISTERS {	\
+  1, 1, 1, 1,			\
+  1, 1, 1, 1,			\
+  1, 1, 1, 1,			\
+  0, 0, 0, 0,			\
+  0, 0, 0, 0,			\
+  0, 0, 0, 0,			\
+  1, 1,				\
+  1, 1,				\
+  1, 1, 1,			\
+  1,				\
+}
 
 /* A C expression whose value is a register class containing hard
    register REGNO.  */
@@ -248,7 +320,7 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
 #define FASTEST_ALIGNMENT 16
 
 /* Every structures size must be a multiple of 8 bits.  */
-#define STRUCTURE_SIZE_BOUNDARY 8
+#define STRUCTURE_SIZE_BOUNDARY 16
 
 /* Look at the fundamental type that is used for a bit-field and use 
    that to impose alignment on the enclosing structure.
@@ -373,5 +445,6 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
   gen_rtx_REG (MODE, PDP1_R2)
 
 #define TARGET_ASM_NAMED_SECTION pdp1_asm_named_section
+#define TARGET_SMALL_REGISTER_CLASSES_FOR_MODE_P hook_bool_mode_true
 
 #endif /* GCC_PDP1_H */
