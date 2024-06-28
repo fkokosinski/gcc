@@ -1,4 +1,4 @@
-#define BITS_PER_UNIT 32
+#define BITS_PER_UNIT 16
 
 FLOAT_MODE (QF, 1, ieee_single_format);
 FLOAT_MODE (HF, 2, ieee_double_format);

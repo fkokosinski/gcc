@@ -26,17 +26,17 @@
 
 /* Number of storage units in a word; normally the size of a
    general-purpose register, a power of two from 1 or 8.  */
-#define BITS_PER_WORD 32
+#define BITS_PER_WORD 16
 #define UNITS_PER_WORD 1
 
-#define INT_TYPE_SIZE 32
+#define INT_TYPE_SIZE 16
 #define SHORT_TYPE_SIZE 16
-#define LONG_TYPE_SIZE 32
-#define LONG_LONG_TYPE_SIZE 64
+#define LONG_TYPE_SIZE 16
+#define LONG_LONG_TYPE_SIZE 32
 
-#define FLOAT_TYPE_SIZE 32
-#define DOUBLE_TYPE_SIZE 32
-#define LONG_DOUBLE_TYPE_SIZE 64
+#define FLOAT_TYPE_SIZE 16
+#define DOUBLE_TYPE_SIZE 16
+#define LONG_DOUBLE_TYPE_SIZE 32
 
 #define DEFAULT_SIGNED_CHAR 0
 
@@ -220,7 +220,7 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
 #define WORDS_BIG_ENDIAN 1
 
 /* Alignment required for a function entry point, in bits.  */
-#define FUNCTION_BOUNDARY 32
+#define FUNCTION_BOUNDARY 16
 
 /* Define this macro as a C expression which is nonzero if accessing
    less than a word of memory (i.e. a `char' or a `short') is no
@@ -231,21 +231,21 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
 /* Define this macro to the minimum alignment enforced by hardware
    for the stack pointer on this machine.  The definition is a C
    expression for the desired alignment (measured in bits).  */
-#define STACK_BOUNDARY 32
+#define STACK_BOUNDARY 16
 
 /* Normal alignment required for function parameters on the stack, in
    bits.  All stack parameters receive at least this much alignment
    regardless of data type.  */
-#define PARM_BOUNDARY 32
+#define PARM_BOUNDARY 16
 
 /* Alignment of field after `int : 0' in a structure.  */
-#define EMPTY_FIELD_BOUNDARY  32
+#define EMPTY_FIELD_BOUNDARY  16
 
 /* No data type wants to be aligned rounder than this.  */
-#define BIGGEST_ALIGNMENT 32
+#define BIGGEST_ALIGNMENT 16
 
 /* The best alignment to use in cases where we have a choice.  */
-#define FASTEST_ALIGNMENT 32
+#define FASTEST_ALIGNMENT 16
 
 /* Every structures size must be a multiple of 8 bits.  */
 #define STRUCTURE_SIZE_BOUNDARY 8
@@ -257,7 +257,7 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
 
 /* Largest integer machine mode for structures.  If undefined, the default
    is GET_MODE_SIZE(DImode).  */
-#define MAX_FIXED_MODE_SIZE 32
+#define MAX_FIXED_MODE_SIZE 16
 
 /* Make arrays of chars word-aligned for the same reasons.  */
 #define DATA_ALIGNMENT(TYPE, ALIGN)		\
@@ -276,7 +276,7 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
 #define TRAMPOLINE_SIZE (2 + 6 + 4 + 2 + 6)
 
 /* Alignment required for trampolines, in bits.  */
-#define TRAMPOLINE_ALIGNMENT 32
+#define TRAMPOLINE_ALIGNMENT 16
 
 /* An alias for the machine mode for pointers.  */
 #define Pmode         QImode
