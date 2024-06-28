@@ -460,6 +460,22 @@ pdp1_register_move_cost (machine_mode mode ATTRIBUTE_UNUSED,
 #undef TARGET_REGISTER_MOVE_COST
 #define TARGET_REGISTER_MOVE_COST pdp1_register_move_cost
 
+static machine_mode
+pdp1_c_mode_for_floating_type (enum tree_index ti)
+{
+  if (ti == TI_FLOAT_TYPE)
+    return QFmode;
+  if (ti == TI_DOUBLE_TYPE)
+    return QFmode;
+  if (ti == TI_LONG_DOUBLE_TYPE)
+    return HFmode;
+	
+}
+
+#undef TARGET_C_MODE_FOR_FLOATING_TYPE
+#define TARGET_C_MODE_FOR_FLOATING_TYPE pdp1_c_mode_for_floating_type
+
+
 struct gcc_target targetm = TARGET_INITIALIZER;
 
 #include "gt-pdp1.h"
