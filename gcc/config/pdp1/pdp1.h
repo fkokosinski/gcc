@@ -196,7 +196,7 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
 /* Define this macro as a C expression that is nonzero for registers that are
    used by the epilogue or the return pattern.  The stack and frame
    pointer registers are already assumed to be used as needed.  */
-#define EPILOGUE_USES(R) (R == PDP1_R5)
+#define EPILOGUE_USES(R) (R == PDP1_R0)
 
 /* A C expression whose value is RTL representing the location of the
    incoming return address at the beginning of any function, before

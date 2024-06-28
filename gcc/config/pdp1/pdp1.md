@@ -288,14 +288,16 @@
 
 (define_insn "call"
   [(call (match_operand:QI 0 "memory_operand" "")
-	 (match_operand:QI 1 "general_operand" ""))]
+         (match_operand:QI 1 "general_operand" ""))
+   (clobber (reg:QI PDP1_ACC))]
   ""
   "jsp\\t%0")
 
 (define_insn "call_value"
-  [(set (match_operand 0 "register_operand" "")
-	(call (match_operand 1 "memory_operand" "")
-	      (match_operand 2 "general_operand" "")))]
+  [(set (match_operand:QI 0 "register_operand" "")
+        (call (match_operand:QI 1 "memory_operand" "")
+              (match_operand:QI 2 "general_operand" "")))
+   (clobber (reg:QI PDP1_ACC))]
   ""
   "jsp\\t%1")
 

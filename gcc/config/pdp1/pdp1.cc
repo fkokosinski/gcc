@@ -243,7 +243,6 @@ pdp1_expand_prologue ()
 {
   int regno;
   rtx insn;
-  rtx reg = gen_rtx_REG (Pmode, 7);
   rtx acc = gen_rtx_REG (Pmode, PDP1_ACC);
 
   /* let's save acc on the stack, because it holds the reset addr */
@@ -315,7 +314,7 @@ pdp1_expand_epilogue ()
 {
   int regno;
   rtx insn;
-  rtx reg = gen_rtx_REG (Pmode, 6);
+  rtx reg;
   rtx acc = gen_rtx_REG (Pmode, PDP1_ACC);
 
   if (cfun->machine->args_size > 0)
@@ -333,7 +332,7 @@ pdp1_expand_epilogue ()
     }
 
   /* restore callee-saved regs */
-  for (regno = FIRST_PSEUDO_REGISTER; regno > 0; regno--)
+  for (regno = FIRST_PSEUDO_REGISTER - 1; regno >= 0; regno--)
     {
       if (df_regs_ever_live_p (regno) && !call_used_or_fixed_reg_p (regno))
         {
@@ -346,7 +345,7 @@ pdp1_expand_epilogue ()
   emit_insn (gen_movqi_pop (hard_frame_pointer_rtx));
 
   /* restore return addr and move it to r0 */
-  reg = gen_rtx_REG (Pmode, PDP1_R6);
+  reg = gen_rtx_REG (Pmode, PDP1_R0);
   emit_insn (gen_movqi_pop (reg));
 
   /* returner */
@@ -427,6 +426,31 @@ pdp1_asm_named_section (const char *name, unsigned int flags ATTRIBUTE_UNUSED,
   fprintf (asm_out_file, "\t.section %s\n", name);
 }
 
+static bool
+pdp1_class_likely_spilled_p (reg_class_t c)
+{
+  return (c == HW_REGS);
+}
+
+#undef TARGET_CLASS_LIKELY_SPILLED_P
+#define TARGET_CLASS_LIKELY_SPILLED_P pdp1_class_likely_spilled_p
+
+static int
+pdp1_register_move_cost (machine_mode mode ATTRIBUTE_UNUSED,
+                         reg_class_t from, reg_class_t to)
+{
+  if (from == HW_REGS && to == HW_REGS)
+    return 4;
+  if (from == HW_REGS && to == GENERAL_REGS)
+    return 2;
+  if (from == GENERAL_REGS && to == HW_REGS)
+    return 2;
+  else
+    return 4;
+}
+
+#undef TARGET_REGISTER_MOVE_COST
+#define TARGET_REGISTER_MOVE_COST pdp1_register_move_cost
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
