@@ -250,15 +250,11 @@ pdp1_expand_prologue ()
   RTX_FRAME_RELATED_P (insn) = 1;
 
   /* push fp */
-  insn = emit_move_insn (acc, hard_frame_pointer_rtx);
-  RTX_FRAME_RELATED_P (insn) = 1;
-  insn = emit_insn (gen_movqi_push (acc));
+  insn = emit_insn (gen_movqi_push (hard_frame_pointer_rtx));
   RTX_FRAME_RELATED_P (insn) = 1;
 
   /* set fp = sp */
-  insn = emit_move_insn (acc, stack_pointer_rtx);
-  RTX_FRAME_RELATED_P (insn) = 1;
-  insn = emit_move_insn (hard_frame_pointer_rtx, acc);
+  insn = emit_move_insn (hard_frame_pointer_rtx, stack_pointer_rtx);
   RTX_FRAME_RELATED_P (insn) = 1;
 
   /* 
@@ -267,11 +263,7 @@ pdp1_expand_prologue ()
    *
    * TODO: can this be handled better? 
    */
-  insn = emit_move_insn (acc, GEN_INT (1));
-  RTX_FRAME_RELATED_P (insn) = 1;
-  insn = emit_insn (gen_addqi3 (acc, acc, hard_frame_pointer_rtx));
-  RTX_FRAME_RELATED_P (insn) = 1;
-  insn = emit_move_insn (hard_frame_pointer_rtx, acc);
+  insn = emit_insn (gen_addqi3 (hard_frame_pointer_rtx, hard_frame_pointer_rtx, GEN_INT (1)));
   RTX_FRAME_RELATED_P (insn) = 1;
   
   /* save callee-saved regs */
@@ -279,32 +271,16 @@ pdp1_expand_prologue ()
     {
       if (df_regs_ever_live_p (regno) && !call_used_or_fixed_reg_p (regno))
         {
-          insn = emit_move_insn (acc, gen_rtx_REG (Pmode, regno));
-          RTX_FRAME_RELATED_P (insn) = 1;
-          insn = emit_insn (gen_movqi_push (acc));
+	  insn = emit_insn (gen_movqi_push (gen_rtx_REG (Pmode, regno)));
           RTX_FRAME_RELATED_P (insn) = 1;
         }
     }
 
   /* make space for local vars on the stack */
-  if (cfun->machine->local_vars_size > 0)
+  int sum = cfun->machine->local_vars_size + cfun->machine->args_size;
+  if (sum > 0)
     {
-      insn = emit_move_insn (acc, GEN_INT (-cfun->machine->local_vars_size));
-      RTX_FRAME_RELATED_P (insn) = 1;
-      insn = emit_insn (gen_addqi3 (acc, acc, stack_pointer_rtx));
-      RTX_FRAME_RELATED_P (insn) = 1;
-      insn = emit_move_insn (stack_pointer_rtx, acc);
-      RTX_FRAME_RELATED_P (insn) = 1;
-    }
-
-  /* make space for args */
-  if (cfun->machine->args_size > 0)
-    {
-      insn = emit_move_insn (acc, GEN_INT (-cfun->machine->args_size));
-      RTX_FRAME_RELATED_P (insn) = 1;
-      insn = emit_insn (gen_addqi3 (acc, acc, stack_pointer_rtx));
-      RTX_FRAME_RELATED_P (insn) = 1;
-      insn = emit_move_insn (stack_pointer_rtx, acc);
+      insn = emit_insn (gen_addqi3 (stack_pointer_rtx, stack_pointer_rtx, GEN_INT (-sum)));
       RTX_FRAME_RELATED_P (insn) = 1;
     }
 }
@@ -313,23 +289,16 @@ void
 pdp1_expand_epilogue ()
 {
   int regno;
+  int sum = cfun->machine->local_vars_size + cfun->machine->args_size;
   rtx insn;
   rtx reg;
   rtx acc = gen_rtx_REG (Pmode, PDP1_ACC);
 
-  if (cfun->machine->args_size > 0)
+  if (sum > 0)
     {
-      emit_move_insn (acc, GEN_INT (cfun->machine->args_size));
-      emit_insn ( gen_addqi3 (acc, acc, stack_pointer_rtx));
-      emit_move_insn (stack_pointer_rtx, acc);
+      insn = emit_insn (gen_addqi3 (stack_pointer_rtx, stack_pointer_rtx, GEN_INT (sum)));
     }
 
-  if (cfun->machine->local_vars_size > 0)
-    {
-      emit_move_insn (acc, GEN_INT (cfun->machine->local_vars_size));
-      emit_insn ( gen_addqi3 (acc, acc, stack_pointer_rtx));
-      emit_move_insn (stack_pointer_rtx, acc);
-    }
 
   /* restore callee-saved regs */
   for (regno = FIRST_PSEUDO_REGISTER - 1; regno >= 0; regno--)
@@ -350,34 +319,6 @@ pdp1_expand_epilogue ()
 
   /* returner */
   emit_insn (gen_indirect_jump (reg));
-}
-
-static reg_class_t
-pdp1_secondary_reload (bool in_p ATTRIBUTE_UNUSED,
-			rtx x,
-			reg_class_t reload_class,
-			machine_mode reload_mode ATTRIBUTE_UNUSED,
-			secondary_reload_info *sri ATTRIBUTE_UNUSED)
-{
-  if (reload_class == HW_REGS)
-    return NO_REGS;
-
-  if (REGNO_REG_CLASS (REGNO (x)) == HW_REGS)
-    return NO_REGS;
-
-  return HW_REGS;
-}
-
-static reg_class_t
-pdp1_preferred_reload_class (rtx x, reg_class_t rclass)
-{
-  return HW_REGS;
-}
-
-static reg_class_t
-pdp1_preferred_output_reload_class (rtx x, reg_class_t rclass)
-{
-  return HW_REGS;
 }
 
 #undef TARGET_PROMOTE_PROTOTYPES
@@ -410,55 +351,12 @@ pdp1_preferred_output_reload_class (rtx x, reg_class_t rclass)
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE pdp1_option_override
 
-#undef  TARGET_SECONDARY_RELOAD
-#define TARGET_SECONDARY_RELOAD pdp1_secondary_reload
-
-#undef  TARGET_PREFERRED_RELOAD_CLASS
-#define TARGET_PREFERRED_RELOAD_CLASS pdp1_preferred_reload_class
-
-#undef  TARGET_PREFERRED_OUTPUT_RELOAD_CLASS
-#define TARGET_PREFERRED_OUTPUT_RELOAD_CLASS pdp1_preferred_output_reload_class
-
 static void
 pdp1_asm_named_section (const char *name, unsigned int flags ATTRIBUTE_UNUSED,
                         tree decl ATTRIBUTE_UNUSED)
 {
   fprintf (asm_out_file, "\t.section %s\n", name);
 }
-
-static bool
-pdp1_class_likely_spilled_p (reg_class_t c)
-{
-  switch (c)
-    {
-      case ACC_REG:
-      case IO_REG:
-      case HW_REGS:
-        return true;
-      default:
-	return false;
-    }
-}
-
-#undef TARGET_CLASS_LIKELY_SPILLED_P
-#define TARGET_CLASS_LIKELY_SPILLED_P pdp1_class_likely_spilled_p
-
-static int
-pdp1_register_move_cost (machine_mode mode ATTRIBUTE_UNUSED,
-                         reg_class_t from, reg_class_t to)
-{
-  if (from == HW_REGS && to == HW_REGS)
-    return 4;
-  if (from == HW_REGS && to == GENERAL_REGS)
-    return 2;
-  if (from == GENERAL_REGS && to == HW_REGS)
-    return 2;
-  else
-    return 4;
-}
-
-#undef TARGET_REGISTER_MOVE_COST
-#define TARGET_REGISTER_MOVE_COST pdp1_register_move_cost
 
 static machine_mode
 pdp1_c_mode_for_floating_type (enum tree_index ti)
@@ -474,23 +372,6 @@ pdp1_c_mode_for_floating_type (enum tree_index ti)
 
 #undef TARGET_C_MODE_FOR_FLOATING_TYPE
 #define TARGET_C_MODE_FOR_FLOATING_TYPE pdp1_c_mode_for_floating_type
-
-static reg_class_t
-pdp1_spill_class (reg_class_t rclass, machine_mode mode)
-{
-  switch (rclass)
-    {
-      case ACC_REG:
-      case IO_REG:
-      case HW_REGS:
-        return GENERAL_REGS;
-      default:
-	return NO_REGS;
-    }
-}
-
-#undef TARGET_SPILL_CLASS
-#define TARGET_SPILL_CLASS pdp1_spill_class
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

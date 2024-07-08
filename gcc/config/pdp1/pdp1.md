@@ -5,8 +5,16 @@
 (include "constraints.md")
 (include "predicates.md")
 
-;; We only support QImode
-(define_mode_iterator PDP1_MODE [QI])
+(define_attr "length" "" (const_int 1))
+
+;; This file implements instruction patterns so that the accumulator register
+;; is hidden from the compiler (almost) altogether.
+;;
+;; Rationale: GCC doesn't handle singleton register classes well, and fails at
+;; register spilling in higher optimization levels if we define them.
+;;
+;; TODO: Some of the patterns defined should eventually be moved to libgcc.
+
 
 ;; TODO: register declaration from `pdp1.h` should be moved here
 (define_constants [
@@ -22,77 +30,72 @@
 (define_insn "nop"
   [(const_int 0)]
   ""
-  "nop")
+  "nop"
+  [(set_attr "length" "1")])
 
 ;; -------------------------------------------------------------------------
 ;; mov instruction
 ;; -------------------------------------------------------------------------
 
+;; We need to define this pattern because it is needed for the mulqihi3 pattern
 (define_insn "movhi"
-  [(set (match_operand:HI 0 "nonimmediate_operand" "=g,c,c")
-	(match_operand:HI 1 "general_operand" "c,g,Z"))]
+  [(set (match_operand:HI 0 "nonimmediate_operand" "=g,g")
+	(match_operand:HI 1 "general_operand" "rm,Z"))]
   ""
   "@
-  dac\\t%0\\n\\tdio\\t%0+1
-  lac\\t%1\\n\\tlio\\t%1+1
-  opr\\t04200")
+  lac\\t%1\\n\\tdac\\t%0\\n\\tlac\\t%1+1\\n\\tdac\\t%0+1
+  dzm\\t%0\\n\\tdzm\\t%0+1"
+  [(set_attr "length" "4,2")])
 
-(define_insn "mov<mode>"
-  [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "=a,a,rm,b,rm,a,b,rm,c")
-	(match_operand:PDP1_MODE 1 "pdp1_movsrc_operand" "rm,i,a,rm,b,Z,Z,Z,c"))]
+;; TODO: we should prepare negative values for the 1's complement arithmetic
+;; that PDP-1 uses
+(define_insn "movqi"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g,g,g,a,a,g")
+	(match_operand:QI 1 "pdp1_movsrc_operand" "rm,i,Z,rm,i,a"))]
   ""
   "@
+  lac\\t%1\\n\\tdac\\t%0
+  law\\t%1\\n\\tdac\\t%0
+  dzm\\t%0
   lac\\t%1
   law\\t%1
-  dac\\t%0
-  lio\\t%1
-  dio\\t%0
-  cla
-  cli
-  dzm\\t%0
-  rcl\\t9\\n\\trcl\\t9")
+  dac\\t%0"
+  [(set_attr "length" "2,2,1,1,1,1")])
 
-(define_expand "mov<mode>_push"
-  [(set (mem:PDP1_MODE (pre_dec:PDP1_MODE (reg:PDP1_MODE PDP1_SP)))
-  	(match_operand:PDP1_MODE 0 "general_operand" "a"))]
+(define_expand "movqi_push"
+  [(set (mem:QI (pre_dec:QI (reg:QI PDP1_SP)))
+  	(match_operand:QI 0 "general_operand" ""))]
   ""
   "
 {
-  rtx sp = gen_rtx_REG (<MODE>mode, PDP1_SP);
-  rtx mem = gen_rtx_MEM (<MODE>mode, sp);
-  rtx incr = gen_rtx_CONST_INT (<MODE>mode, -1);
-  rtx acc = operands[0];
+  rtx sp = gen_rtx_REG (QImode, PDP1_SP);
+  rtx mem = gen_rtx_MEM (QImode, sp);
+  rtx incr = gen_rtx_CONST_INT (QImode, -1);
 
   /* push the actual value */
-  emit_move_insn (mem, acc);
+  emit_move_insn (mem, operands[0]);
 
   /* decrement the sp */
-  emit_move_insn (acc, incr);
-  emit_insn (gen_add<mode>3 (acc, acc, sp));
-  emit_move_insn (sp, acc);
+  emit_insn (gen_addqi3 (sp, sp, incr));
 
   DONE;
 }")
 
-(define_expand "mov<mode>_pop"
-  [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "r")
-  	(mem:PDP1_MODE (post_inc:PDP1_MODE (reg:PDP1_MODE PDP1_SP))))]
+(define_expand "movqi_pop"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "")
+  	(mem:QI (post_inc:QI (reg:QI PDP1_SP))))]
   ""
   "
 {
-  rtx sp = gen_rtx_REG (<MODE>mode, PDP1_SP);
-  rtx acc = gen_rtx_REG (<MODE>mode, PDP1_ACC);
-  rtx mem = gen_rtx_MEM (<MODE>mode, sp);
-  rtx incr = gen_rtx_CONST_INT (<MODE>mode, 1);
+  rtx sp = gen_rtx_REG (QImode, PDP1_SP);
+  rtx mem = gen_rtx_MEM (QImode, sp);
+  rtx incr = gen_rtx_CONST_INT (QImode, 1);
 
   /* increment the sp */
-  emit_move_insn (acc, incr);
-  emit_insn (gen_add<mode>3 (acc, acc, sp));
-  emit_move_insn (sp, acc);
+  emit_insn (gen_addqi3 (sp, sp, incr));
 
   /* pop the actual value */
-  emit_move_insn (acc, mem);
-  emit_move_insn (operands[0], acc);
+  emit_move_insn (operands[0], mem);
 
   DONE;
 }")
@@ -101,178 +104,146 @@
 ;; arith instruction
 ;; -------------------------------------------------------------------------
 
-;; TODO: `idx` clobbers  up the ACC register - how to represent that?
-(define_insn "add<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "nonimmediate_operand" "=a,rm")
-	(plus:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "nonimmediate_operand" "0,0")
-	  (match_operand:PDP1_MODE 2 "pdp1_addsrc_operand" "rm,U")))]
+(define_insn "addqi3"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g,g,g")
+	(plus:QI
+	  (match_operand:QI 1 "nonimmediate_operand" "0,g,g")
+	  (match_operand:QI 2 "general_operand" "U,i,rm")))]
   ""
   "@
-  add\\t%2
-  idx\\t%0")
+  idx\\t%0
+  law\\t%2\\n\\tadd\\t%1\\n\\tdac\\t%0
+  lac\\t%2\\n\\tadd\\t%1\\n\\tdac\\t%0"
+  [(set_attr "length" "3,3,1")])
 
-(define_insn "sub<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a")
-	(minus:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0")
-	  (match_operand:PDP1_MODE 2 "nonimmediate_operand" "g")))]
+(define_insn "subqi3"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g,g")
+	(minus:QI
+	  (match_operand:QI 1 "general_operand" "rm,i")
+	  (match_operand:QI 2 "nonimmediate_operand" "g,g")))]
   ""
-  "sub\\t%2")
+  "@
+  lac\\t%1\\n\\tsub\\t%2\\n\\tdac\\t%0
+  law\\t%1\\n\\tsub\\t%2\\n\\tdac\\t%0"
+  [(set_attr "length" "3,3")])
 
-;; TODO: the result is multiplied by 2 - fix this
-(define_expand "mulqihi3"
-  [(set (match_operand:HI 0 "register_operand" "=c")
+(define_insn "mulqihi3"
+  [(set (match_operand:HI 0 "nonimmediate_operand" "=g,g")
 	(mult:HI
-	  (match_operand:QI 1 "register_operand" "a")
-	  (match_operand:QI 2 "nonimmediate_operand" "g")))]
-
+	  (match_operand:QI 1 "nonimmediate_operand" "0,0")
+	  (match_operand:QI 2 "general_operand" "rm,i")))]
   ""
-  "
-{
-  rtx rot = gen_rtx_CONST_INT (HImode, 1);
-
-  emit_insn (gen_mulqihi3_internal (operands[0], operands[1], operands[2]));
-  emit_insn (gen_ashrhi3 (operands[0], operands[0], rot));
-
-  DONE;
-}")
-
-(define_insn "mulqihi3_internal"
-  [(set (match_operand:HI 0 "register_operand" "=c")
-	(mult:HI
-	  (match_operand:QI 1 "register_operand" "a")
-	  (match_operand:QI 2 "nonimmediate_operand" "g")))]
-
-  ""
-  "mul\\t%2")
+  "@
+  lac\\t%2\\n\\tmul\\t%1\\n\\tscr\\t1\\n\\tdac\\t%0\\n\\tdio\\t%0+1
+  law\\t%2\\n\\tmul\\t%1\\n\\tscr\\t1\\n\\tdac\\t%0\\n\\tdio\\t%0+1"
+  [(set_attr "length" "5,5")])
 
 (define_insn "divmodqi4"
-  [(set (match_operand:QI 0 "register_operand" "=a")
+  [(set (match_operand:QI 0 "register_operand" "=g")
 	(div:QI
-	  (match_operand:QI 1 "register_operand" "b")
+	  (match_operand:QI 1 "register_operand" "g")
 	  (match_operand:QI 2 "nonimmediate_operand" "g")))
-   (set (match_operand:QI 3 "register_operand" "=1")
+   (set (match_operand:QI 3 "register_operand" "=g")
 	(mod:QI
 	  (match_dup 1)
 	  (match_dup 2)))]
   ""
-  ;; cla    # zero extend the combined ACC + IO register
-  ;; sil 1 -# shift the IO reg one bit to the right; IO LSB is ignored in div
-  ;; div %0
-  ;; nop    # div skips the next instruction
-  "cla\\n\\tsil\\t1\\n\\tdiv\\t%2\\n\\tnop")
+  ;; cla
+  ;; lio %2
+  ;; sil 1
+  ;; div %1
+  ;; nop
+  ;; dio %3
+  ;; dac %0
+  "cla\\n\\tlio\\t%1\\n\\tsil\\t1\\n\\tdiv\\t%2\\n\\tnop\\n\\tdio\\t%3\\n\\tdac\\t%0"
+  [(set_attr "length" "7")])
 
 ;; -------------------------------------------------------------------------
 ;; logic instruction
 ;; -------------------------------------------------------------------------
 
-(define_insn "one_cmpl<mode>2"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a")
-	(neg:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0")))]
+(define_insn "one_cmplqi2"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g,g")
+	(neg:QI
+	  (match_operand:QI 1 "general_operand" "rm,i")))]
   ""
-  "cma")
+  "@
+  lac\\t%1\\n\\tcma\\n\\tdac\\t%0
+  law\\t%1\\n\\tcma\\n\\tdac\\t%0"
+  [(set_attr "length" "3,3")])
 
-(define_insn "and<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a")
-	(and:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0")
-	  (match_operand:PDP1_MODE 2 "nonimmediate_operand" "g")))]
+(define_insn "andqi3"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g,g")
+	(and:QI
+	  (match_operand:QI 1 "nonimmediate_operand" "g,g")
+	  (match_operand:QI 2 "general_operand" "rm,i")))]
   ""
-  "and\\t%2")
+  "@
+  lac\\t%2\\n\\tand\\t%1\\n\\tdac\\t%0
+  law\\t%2\\n\\tand\\t%1\\n\\tdac\\t%0"
+  [(set_attr "length" "3,3")])
 
-(define_insn "xor<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a")
-	(xor:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0")
-	  (match_operand:PDP1_MODE 2 "nonimmediate_operand" "g")))]
+(define_insn "iorqi3"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g,g")
+	(ior:QI
+	  (match_operand:QI 1 "nonimmediate_operand" "g,g")
+	  (match_operand:QI 2 "general_operand" "rm,i")))]
   ""
-  "xor\\t%2")
+  "@
+  lac\\t%2\\n\\tior\\t%1\\n\\tdac\\t%0
+  law\\t%2\\n\\tior\\t%1\\n\\tdac\\t%0"
+  [(set_attr "length" "3,3")])
 
-(define_insn "ior<mode>3"
-  [(set (match_operand:PDP1_MODE 0 "register_operand" "=a")
-	(ior:PDP1_MODE
-	  (match_operand:PDP1_MODE 1 "register_operand" "0")
-	  (match_operand:PDP1_MODE 2 "nonimmediate_operand" "g")))]
+(define_insn "xorqi3"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g,g")
+	(xor:QI
+	  (match_operand:QI 1 "nonimmediate_operand" "g,g")
+	  (match_operand:QI 2 "general_operand" "rm,i")))]
   ""
-  "ior\\t%2")
+  "@
+  lac\\t%2\\n\\txor\\t%1\\n\\tdac\\t%0
+  law\\t%2\\n\\txor\\t%1\\n\\tdac\\t%0"
+  [(set_attr "length" "3,3")])
 
 ;; -------------------------------------------------------------------------
 ;; shift instruction
 ;; -------------------------------------------------------------------------
 
 (define_insn "ashlqi3"
-  [(set (match_operand:QI 0 "register_operand" "=a,b")
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
 	(ashift:QI
-	  (match_operand:QI 1 "register_operand" "0,0")
-	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i,i")))]
+	  (match_operand:QI 1 "nonimmediate_operand" "g")
+	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i")))]
   ""
-  "@
-  sal\\t%2
-  sil\\t%2")
-
-(define_insn "ashlhi3"
-  [(set (match_operand:HI 0 "register_operand" "=c")
-	(ashift:HI
-	  (match_operand:HI 1 "register_operand" "0")
-	  (match_operand:HI 2 "pdp1_shift_rotate_amount" "i")))]
-  ""
-  "scl\\t%2")
+  "lac\\t%1\\n\\tsal\\t%2\\n\\tdac\\t%0"
+  [(set_attr "length" "3")])
 
 (define_insn "ashrqi3"
-  [(set (match_operand:QI 0 "register_operand" "=a,b")
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
 	(ashiftrt:QI
-	  (match_operand:QI 1 "register_operand" "0,0")
-	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i,i")))]
+	  (match_operand:QI 1 "nonimmediate_operand" "g")
+	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i")))]
   ""
-  "@
-  sar\\t%2
-  sir\\t%2")
-
-(define_insn "ashrhi3"
-  [(set (match_operand:HI 0 "register_operand" "=c")
-	(ashiftrt:HI
-	  (match_operand:HI 1 "register_operand" "0")
-	  (match_operand:HI 2 "pdp1_shift_rotate_amount" "i")))]
-  ""
-  "scr\\t%2")
+  "lac\\t%1\\n\\tsar\\t%2\\n\\tdac\\t%0"
+  [(set_attr "length" "3")])
 
 (define_insn "rotlqi3"
-  [(set (match_operand:QI 0 "register_operand" "=a,b")
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
 	(rotate:QI
-	  (match_operand:QI 1 "register_operand" "0,0")
-	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i,i")))]
+	  (match_operand:QI 1 "nonimmediate_operand" "g")
+	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i")))]
   ""
-  "@
-  ral\\t%2
-  ril\\t%2")
-
-(define_insn "rotlhi3"
-  [(set (match_operand:HI 0 "register_operand" "=c")
-	(rotate:HI
-	  (match_operand:HI 1 "register_operand" "0")
-	  (match_operand:HI 2 "pdp1_shift_rotate_amount" "i")))]
-  ""
-  "rcl\\t%2")
+  "lac\\t%1\\n\\tral\\t%2\\n\\tdac\\t%0"
+  [(set_attr "length" "3")])
 
 (define_insn "rotrqi3"
-  [(set (match_operand:QI 0 "register_operand" "=a,b")
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
 	(rotatert:QI
-	  (match_operand:QI 1 "register_operand" "0,0")
-	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i,i")))]
+	  (match_operand:QI 1 "nonimmediate_operand" "g")
+	  (match_operand:QI 2 "pdp1_shift_rotate_amount" "i")))]
   ""
-  "@
-  rar\\t%2
-  rir\\t%2")
-
-(define_insn "rotrhi3"
-  [(set (match_operand:HI 0 "register_operand" "=c")
-	(rotatert:HI
-	  (match_operand:HI 1 "register_operand" "0")
-	  (match_operand:HI 2 "pdp1_shift_rotate_amount" "i")))]
-  ""
-  "rcr\\t%2")
+  "lac\\t%1\\n\\trar\\t%2\\n\\tdac\\t%0"
+  [(set_attr "length" "3")])
 
 ;; -------------------------------------------------------------------------
 ;; jmp instruction
@@ -281,60 +252,66 @@
 (define_insn "indirect_jump"
   [(set (pc) (match_operand:QI 0 "nonimmediate_operand" "r"))]
   ""
-  "jmp.i\\t%0")
+  "jmp.i\\t%0"
+  [(set_attr "length" "1")])
 
 (define_insn "jump"
   [(set (pc)
         (label_ref (match_operand 0 "" "")))]
   ""
-  "jmp\\t%l0")
+  "jmp\\t%l0"
+  [(set_attr "length" "1")])
 
 (define_insn "call"
   [(call (match_operand:QI 0 "memory_operand" "")
-         (match_operand:QI 1 "general_operand" ""))
-   (clobber (reg:QI PDP1_ACC))]
+         (match_operand:QI 1 "general_operand" ""))]
   ""
-  "jsp\\t%0")
+  "jsp\\t%0"
+  [(set_attr "length" "1")])
 
 (define_insn "call_value"
-  [(set (match_operand:QI 0 "register_operand" "")
+  [(set (match_operand 0 "register_operand" "")
         (call (match_operand:QI 1 "memory_operand" "")
-              (match_operand:QI 2 "general_operand" "")))
-   (clobber (reg:QI PDP1_ACC))]
+              (match_operand:QI 2 "general_operand" "")))]
   ""
-  "jsp\\t%1")
+  "jsp\\t%1"
+  [(set_attr "length" "1")])
 
 ;; -------------------------------------------------------------------------
 ;; compare and conditionals
 ;; -------------------------------------------------------------------------
 
-(define_insn "cbranch<mode>4"
+(define_insn "cbranchqi4"
   [(set (pc)
         (if_then_else
 	  (match_operator 0 "pdp1_comparison_operator"
-	    [(match_operand:PDP1_MODE 1 "register_operand" "+a")
-	     (match_operand:PDP1_MODE 2 "register_operand" "rm")])
+	    [(match_operand:QI 1 "nonimmediate_operand" "g")
+	     (match_operand:QI 2 "nonimmediate_operand" "g")])
 	  (label_ref (match_operand 3 "" ""))
 	  (pc)))]
   ""
 {
   switch (GET_CODE (operands[0])) {
   case EQ:
-    return "sad\\t%2\\n\\t"
+    return "lac\\t%1\\n\\t" 
+           "sad\\t%2\\n\\t"
            "jmp\\t%l3";
   case NE:
-    return "sas\\t%2\\n\\t"
+    return "lac\\t%1\\n\\t" 
+           "sas\\t%2\\n\\t"
            "jmp\\t%l3";
 
   case GT:
     /* 0500 = sza | sma */
-    return "sub\\t%2\\n\\t"
+    return "lac\\t%1\\n\\t" 
+           "sub\\t%2\\n\\t"
            "skp\\t0500\\n\\t"
            "jmp\\t%l3\\n\\t";
 
   case LT:
     /* 0300 = sza | spa */
-    return "sub\\t%2\\n\\t"
+    return "lac\\t%1\\n\\t" 
+           "sub\\t%2\\n\\t"
            "skp\\t0300\\n\\t"
            "jmp\\t%l3\\n\\t";
   }
