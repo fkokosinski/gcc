@@ -31,7 +31,7 @@
 
 #define INT_TYPE_SIZE 16
 #define SHORT_TYPE_SIZE 16
-#define LONG_TYPE_SIZE 16
+#define LONG_TYPE_SIZE 32
 #define LONG_LONG_TYPE_SIZE 32
 
 #define DEFAULT_SIGNED_CHAR 0
@@ -273,14 +273,6 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
   gen_frame_mem (Pmode,							\
 		 plus_constant (Pmode, stack_pointer_rtx, UNITS_PER_WORD))
 
-/* Describe how we implement __builtin_eh_return.  */
-#define EH_RETURN_DATA_REGNO(N)	((N) < 4 ? (N+2) : INVALID_REGNUM)
-
-/* Store the return handler into the call frame.  */
-#define EH_RETURN_HANDLER_RTX						\
-  gen_frame_mem (Pmode,							\
-		 plus_constant (Pmode, frame_pointer_rtx, UNITS_PER_WORD))
-
 /* Storage Layout */
 
 #define BITS_BIG_ENDIAN 1
@@ -418,8 +410,7 @@ static inline enum reg_class pdp1_regno_reg_class(int regno)
 
 #define HAS_LONG_UNCOND_BRANCH true
 
-#define LIBCALL_VALUE(MODE) \
-  gen_rtx_REG (MODE, PDP1_R2)
+#define LIBCALL_VALUE(MODE) gen_rtx_REG (MODE, PDP1_R1)
 
 #define TARGET_ASM_NAMED_SECTION pdp1_asm_named_section
 #define TARGET_SMALL_REGISTER_CLASSES_FOR_MODE_P hook_bool_mode_true

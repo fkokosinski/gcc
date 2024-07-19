@@ -116,16 +116,18 @@
   lac\\t%2\\n\\tadd\\t%1\\n\\tdac\\t%0"
   [(set_attr "length" "3,3,1")])
 
-(define_insn "subqi3"
-  [(set (match_operand:QI 0 "nonimmediate_operand" "=g,g")
-	(minus:QI
-	  (match_operand:QI 1 "general_operand" "rm,i")
-	  (match_operand:QI 2 "nonimmediate_operand" "g,g")))]
-  ""
-  "@
-  lac\\t%1\\n\\tsub\\t%2\\n\\tdac\\t%0
-  law\\t%1\\n\\tsub\\t%2\\n\\tdac\\t%0"
-  [(set_attr "length" "3,3")])
+;; TODO: the subqi3 pattern is commented out for the time being to showcase and
+;; test libgcc
+;;(define_insn "subqi3"
+;;  [(set (match_operand:QI 0 "nonimmediate_operand" "=g,g")
+;;	(minus:QI
+;;	  (match_operand:QI 1 "general_operand" "rm,i")
+;;	  (match_operand:QI 2 "nonimmediate_operand" "g,g")))]
+;;  ""
+;;  "@
+;;  lac\\t%1\\n\\tsub\\t%2\\n\\tdac\\t%0
+;;  law\\t%1\\n\\tsub\\t%2\\n\\tdac\\t%0"
+;;  [(set_attr "length" "3,3")])
 
 (define_insn "mulqihi3"
   [(set (match_operand:HI 0 "nonimmediate_operand" "=g,g")

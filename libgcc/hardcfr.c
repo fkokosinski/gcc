@@ -265,40 +265,40 @@ __hardcfr_check_fail (size_t const blocks ATTRIBUTE_UNUSED,
 /* Check that, for each of the BLOCKS basic blocks, if its bit is set in
    VISITED, at least one of its predecessors in CFG is also set, and at also
    that at least one of its successors in CFG is also set.  */
-void
-__hardcfr_check (size_t const blocks,
-		 vword const *const visited,
-		 vword const *const cfg)
-{
-  vword const *cfg_it = cfg;
-  for (size_t i = 0; i < blocks; i++)
-    {
-      bool v = visited_p (i, visited);
-
-      /* For each block, there are two sequences of pairs (mask, index), each
-	 sequence terminated by a single all-zero mask (no index).  The first
-	 sequence is for predecessor blocks, the second is for successors.  At
-	 least one of each must be set.  */
-      if (!v)
-	{
-	  /* Consume predecessors.  */
-	  consume_seq (&cfg_it);
-	  /* Consume successors.  */
-	  consume_seq (&cfg_it);
-	}
-      else
-	{
-	  /* Check predecessors.  */
-	  if (!check_seq (visited, &cfg_it))
-	    __hardcfr_check_fail (blocks, visited, cfg, i, 0,
-				  __builtin_return_address (0));
-	  /* Check successors.  */
-	  if (!check_seq (visited, &cfg_it))
-	    __hardcfr_check_fail (blocks, visited, cfg, i, 1,
-				  __builtin_return_address (0));
-	}
-    }
-  if (excess_bits_set_p (blocks, visited))
-    __hardcfr_check_fail (blocks, visited, cfg, blocks - 1, 2,
-			  __builtin_return_address (0));
-}
+//void
+//__hardcfr_check (size_t const blocks,
+//		 vword const *const visited,
+//		 vword const *const cfg)
+//{
+//  vword const *cfg_it = cfg;
+//  for (size_t i = 0; i < blocks; i++)
+//    {
+//      bool v = visited_p (i, visited);
+//
+//      /* For each block, there are two sequences of pairs (mask, index), each
+//	 sequence terminated by a single all-zero mask (no index).  The first
+//	 sequence is for predecessor blocks, the second is for successors.  At
+//	 least one of each must be set.  */
+//      if (!v)
+//	{
+//	  /* Consume predecessors.  */
+//	  consume_seq (&cfg_it);
+//	  /* Consume successors.  */
+//	  consume_seq (&cfg_it);
+//	}
+//      else
+//	{
+//	  /* Check predecessors.  */
+//	  if (!check_seq (visited, &cfg_it))
+//	    __hardcfr_check_fail (blocks, visited, cfg, i, 0,
+//				  __builtin_return_address (0));
+//	  /* Check successors.  */
+//	  if (!check_seq (visited, &cfg_it))
+//	    __hardcfr_check_fail (blocks, visited, cfg, i, 1,
+//				  __builtin_return_address (0));
+//	}
+//  }
+//  if (excess_bits_set_p (blocks, visited))
+//    __hardcfr_check_fail (blocks, visited, cfg, blocks - 1, 2,
+//			  __builtin_return_address (0));
+//}

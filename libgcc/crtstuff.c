@@ -62,7 +62,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #include "coretypes.h"
 #include "tm.h"
 #include "libgcc_tm.h"
-#include "unwind-dw2-fde.h"
+//#include "unwind-dw2-fde.h"
 
 #ifndef FORCE_CODE_SECTION_ALIGN
 # define FORCE_CODE_SECTION_ALIGN
@@ -595,7 +595,7 @@ __do_global_ctors_1(void)
 #endif /* USE_EH_FRAME_REGISTRY || USE_TM_CLONE_REGISTRY */
 
 #else /* ! __LIBGCC_INIT_SECTION_ASM_OP__ && ! HAS_INIT_SECTION */
-#error "What are you doing with crtstuff.c, then?"
+//#error "What are you doing with crtstuff.c, then?"
 #endif
 
 #elif defined(CRT_END) /* ! CRT_BEGIN */
@@ -754,7 +754,7 @@ __do_global_ctors (void)
 }
 
 #else /* ! __LIBGCC_INIT_SECTION_ASM_OP__ && ! HAS_INIT_SECTION */
-#error "What are you doing with crtstuff.c, then?"
+//#error "What are you doing with crtstuff.c, then?"
 #endif
 
 #else /* ! CRT_BEGIN && ! CRT_END */

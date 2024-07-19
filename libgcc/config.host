@@ -122,8 +122,6 @@ ft32*)	cpu_type=ft32
 	;;
 moxie*)	cpu_type=moxie
 	;;
-pdp1-*) cpu_type=pdp1
-	;;
 i[34567]86-*-*)
 	cpu_type=i386
 	;;
@@ -1204,7 +1202,7 @@ or1k-*-*)
 	tmake_file="$tmake_file t-softfp-sfdf t-softfp"
 	;;
 pdp1-*-*)
-	tmake_files="pdp1/t-pdp1"
+	tmake_file="$tmake_file pdp1/t-pdp1"
 	;;
 pdp11-*-*)
 	tmake_file="pdp11/t-pdp11 t-fdpbit"
@@ -1673,9 +1671,11 @@ vxworks)
 	esac
 esac
 
+
 case ${host} in
 *-*-musl*)
   # The gthr weak references are unsafe with static linking
   tmake_file="$tmake_file t-gthr-noweak"
   ;;
 esac
+

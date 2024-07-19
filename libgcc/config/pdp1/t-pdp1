@@ -1,1 +1,12 @@
 HOST_LIBGCC2_CFLAGS += -Os -nostdinc
+
+# don't build libgcc.a with debug info
+LIBGCC2_DEBUG_CFLAGS =
+
+# no exception handling
+LIB2ADDEH = 
+
+CRTSTUFF_T_CFLAGS = -fno-asynchronous-unwind-tables -fno-unwind-tables
+
+LIB1ASMSRC = pdp1/lib1funcs.S
+LIB1ASMFUNCS = __subqi3 __negqi2 __lshrqi3

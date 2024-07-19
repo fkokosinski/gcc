@@ -1002,6 +1002,9 @@ case $cpu-$vendor in
 	pdp11-unknown)
 		vendor=dec
 		;;
+	pdp1-unknown)
+		vendor=dec
+		;;
 	we32k-unknown)
 		vendor=att
 		;;
@@ -1566,6 +1569,9 @@ case $cpu-$vendor in
 		os=tops20
 		;;
 	pdp11-*)
+		os=none
+		;;
+	pdp1-*)
 		os=none
 		;;
 	*-dec | vax-*)
